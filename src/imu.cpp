@@ -138,16 +138,16 @@ int IMU::parse_readbuff(uint8_t *readbuff, uint32_t len)
 	{
 		if (readbuff[0] == 0x68 && readbuff[1] == 0x1F && readbuff[2] == 0x00 && readbuff[3] == 0x84)
 		{
+			// 略作修改，以对齐两个坐标系
 			this->roll = this->ToAngle(&readbuff[4]);
 			this->pitch = this->ToAngle(&readbuff[7]);
 			this->yaw = this->ToAngle(&readbuff[10]);
-			this->x_acc = this->ToAcc(&readbuff[13]);
-			this->y_acc = this->ToAcc(&readbuff[16]);
+			this->x_acc = this->ToAcc(&readbuff[16]);
+			this->y_acc = -1.0 *this->ToAcc(&readbuff[13]);
 			this->z_acc = this->ToAcc(&readbuff[19]);
-			this->roll_vel = this->ToAngle(&readbuff[22]);
-			this->pitch_vel = this->ToAngle(&readbuff[25]);
+			this->roll_vel = this->ToAngle(&readbuff[25]);
+			this->pitch_vel = -1 * this->ToAngle(&readbuff[22]);
 			this->yaw_vel = this->ToAngle(&readbuff[28]);
-
 			return 0;
 		}
 		else
@@ -179,16 +179,9 @@ void IMU::ContituousRead()
 
 void IMU::printall()
 {
-	cout << "Euler Angle:=[" << this->roll << ", " << this->pitch << ", " << this->yaw << "]" << endl;
+	cout << "Euler Angle:=[" << this->roll  * 180.0 / M_PI << ", " << this->pitch * 180.0 / M_PI  << ", " << this->yaw  * 180.0 / M_PI << "]" << endl;
 	cout << "Acceleration:=[" << this->x_acc << ", " << this->y_acc << ", " << this->z_acc << "]" << endl;
-	cout << "Angular Vel:=[" << this->roll_vel << ", " << this->pitch_vel << ", " << this->yaw_vel << "]" << endl;
-}
-
-void IMU::printAngle()
-{
-	cout << "Euler Angle:=[" << this->roll * 180.0 / M_PI << ", " << this->pitch * 180.0 / M_PI << ", " << this->yaw * 180.0 / M_PI << "]" << endl;
-	cout << "Acceleration:=[" << this->x_acc << ", " << this->y_acc << ", " << this->z_acc << "]" << endl;
-	cout << "Angular Vel:=[" << this->roll_vel * 180.0 / M_PI << ", " << this->pitch_vel * 180.0 / M_PI << ", " << this->yaw_vel * 180.0 / M_PI << "]" << endl;
+	cout << "Angular Vel:=[" << this->roll_vel * 180.0 / M_PI  << ", " << this->pitch_vel  * 180.0 / M_PI << ", " << this->yaw_vel * 180.0 / M_PI  << "]" << endl;
 }
 
 uint8_t IMU::CRC_cal(uint8_t *buff, uint8_t len)

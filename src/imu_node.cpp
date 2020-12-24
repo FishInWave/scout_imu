@@ -1,3 +1,13 @@
+/**
+ * @file imu_node.cpp
+ * @author Yuwei
+ * @brief 真正版本的IMU驱动
+ * @version 0.1
+ * @date 2020-12-24
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 #include "imu.hpp"
@@ -56,31 +66,38 @@ int main(int argc, char **argv)
   imuros.linear_acceleration_covariance[6] = 0;
   imuros.linear_acceleration_covariance[7] = 0;
   imuros.linear_acceleration_covariance[8] = 0.083;
-  int count=0;
+  int count = 0;
+  ROS_INFO_STREAM("Open /dev/ttyUSB0 successfully!");
   while (ros::ok())
   {
-    read(sp, buffer(buf));
-    imuros.header.stamp = ros::Time::now();
-    imuraw.parse_readbuff(buf, 32);
-    if(imuraw.CRC_cal(&buf[1],30) != buf[31])
-      std::cout << count++ << std::endl;
-    // imuraw.printAngle();
-    rotation = Eigen::AngleAxisf(imuraw.roll, Eigen::Vector3f::UnitX()) * Eigen::AngleAxisf(imuraw.pitch, Eigen::Vector3f::UnitY()) * Eigen::AngleAxisf(imuraw.yaw, Eigen::Vector3f::UnitZ());
-    q = rotation;
-    q.normalize();
-    imuros.orientation.w = q.w();
-    imuros.orientation.x = q.x();
-    imuros.orientation.y = q.y();
-    imuros.orientation.z = q.z();
-    imuros.angular_velocity.x = imuraw.roll_vel;
-    imuros.angular_velocity.y = imuraw.pitch_vel;
-    imuros.angular_velocity.z = imuraw.yaw_vel;
-    imuros.linear_acceleration.x = imuraw.x_acc;
-    imuros.linear_acceleration.y = imuraw.y_acc;
-    imuros.linear_acceleration.z = imuraw.z_acc;
-    imu_pub.publish(imuros);
-    ros::spinOnce();
-    loop_rate.sleep();
+    if (read(sp, buffer(buf)) == 32)
+    {
+      imuros.header.stamp = ros::Time::now();
+      imuraw.parse_readbuff(buf, 32);
+      // imuraw.printall();
+      if (imuraw.CRC_cal(&buf[1], 30) != buf[31])
+        std::cout << count++ << std::endl;
+      rotation = Eigen::AngleAxisf(imuraw.roll, Eigen::Vector3f::UnitX()) * Eigen::AngleAxisf(imuraw.pitch, Eigen::Vector3f::UnitY()) * Eigen::AngleAxisf(imuraw.yaw, Eigen::Vector3f::UnitZ());
+      q = rotation;
+      q.normalize();
+      imuros.orientation.w = q.w();
+      imuros.orientation.x = q.x();
+      imuros.orientation.y = q.y();
+      imuros.orientation.z = q.z();
+      imuros.angular_velocity.x = imuraw.roll_vel;
+      imuros.angular_velocity.y = imuraw.pitch_vel;
+      imuros.angular_velocity.z = imuraw.yaw_vel;
+      imuros.linear_acceleration.x = imuraw.x_acc;
+      imuros.linear_acceleration.y = imuraw.y_acc;
+      imuros.linear_acceleration.z = imuraw.z_acc;
+      imu_pub.publish(imuros);
+      ros::spinOnce();
+      loop_rate.sleep();
+    }
+    else
+    {
+      std::cout << "no enough data" << std::endl;
+    }
   }
   iosev.run();
   return 0;
