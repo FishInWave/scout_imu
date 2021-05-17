@@ -1,13 +1,27 @@
 # IMU node
 ## 编译
-依赖于Eigen和Boost，使用系统自带的库即可。
+依赖于Eigen和Boost以及Serial，需要事先安装Serial。
 ```bash
+sudo apt-get install ros-melodic-serial
 cd ~/catkin_ws
 catkin_make
 ```
+## 给串口/dev/ttyUSB0权限
+在 /etc/udev/rules.d 目录下，自己再添加一个 20-usb-serial.rules文件，内容如下：
+`sudo touch 20-usb-serial.rules`
+```bash
+KERNEL=="ttyUSB*"  MODE="0777" 
+KERNEL=="ttyS*"  MODE="0777" 
+```
+保存
+重启电脑，或者拔掉由串口过来的USB线，重新连接
+查看权限：`ls /dev/ttyS0 -l`
+或者`sudo chmod 777 /dev/ttyUSB0`
+
 ## 运行
 确保IMU已经上电后，插上USB，静置5秒钟，等待IMU初始化，然后输入：
 ```bash
+roscore
 rosrun scout_imu scout_imu_node
 ```
 
